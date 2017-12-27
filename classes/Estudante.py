@@ -1,46 +1,62 @@
 __author__ = "Mario Figueiro Zemor"
 __email__ = "mario.figueiro@ufgrs.br"
-import classes.Database as db;
+from classes.Database import *
 import logging
 
 logger = logging.getLogger(__name__);
 
 class Estudante():
-
-    queries = { 'INSERT' : 'INSERT INTO estudante VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-                'UPDATE' : '',
-                'DELETE' : '',
-                'FIND_ALL' : ''};
-
-    def __init__(self,inscricao,idade,sexo,cod_nacionalidade,cod_escola,cod_municipio_nasc,cod_uf_nasc,cod_municipio_resid,cod_conclusao_EM,ano_conclusao_EM,estado_civil,raca):
-        self.inscricao = inscricao;
-        self.idade = idade;
-        self.sexo = sexo;
-        self.cod_nacionalidade = cod_nacionalidade;
-        self.cod_escola = cod_escola;
-        self.cod_municipio_nasc = cod_municipio_nasc;
-        self.cod_uf_nasc = cod_uf_nasc;
-        self.cod_municipio_resid = cod_municipio_nasc;
-        self.cod_conclusao_EM = cod_conclusao_EM;
-        self.ano_conclusao_EM = ano_conclusao_EM;
-        self.estado_civil = estado_civil;
-        self.raca = raca;
-
-    def toString():
-        return "Estudante["+self.inscricao+"]";
+    cursor = Database.getCursor();
+    def __init__(self,tupla):
+        self.inscricao = tupla[0];
+        self.idade = tupla[1];
+        self.sexo = tupla[2];
+        self.cod_nacionalidade = tupla[3];
+        self.cod_municipio_resid = tupla[4];
+        self.cod_municipio_nasc = tupla[5];
+        self.cod_uf_resid = tupla[6];
+        self.cod_uf_nasc = tupla[7];
+        self.estado_civil = tupla[8];
+        self.etnia = tupla[9];
+        self.cod_conclusao_EM = tupla[10];
+        self.ano_conclusao_EM = tupla[11];
+        self.tipo_escola_EM = tupla[12];
+        self.tipo_ens_escola_EM = tupla[13];
+        self.cod_escola = tupla[14];
+        
+    def toString(self):
+        return "Estudante[{},{},{}]".format(self.inscricao,self.idade,self.sexo);
 
     @staticmethod
     def getQuery(query):
+        queries = { 'INSERT' : """INSERT INTO estudante VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    'FIND_BY_ID': """SELECT * FROM estudante WHERE codinscricao = {} """};
         return queries[query];
 
     @staticmethod
     def insert(values,cursor):
         try:
             logger.debug("Inserting values: {} into Student.".format(values));
-            query = 'INSERT INTO estudante VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'; #queries["INSERT"];
+            query = Estudante.getQuery('INSERT');
             cursor.execute(query,values);
         except Exception as e:
             logger.error("Exception during insert values into Student: {}".format(e));
+            raise
+
+    @staticmethod
+    def findByCod(cod):
+        try:
+            logger.debug("Find Studante by cod.");
+            query = Estudante.getQuery('FIND_BY_ID');
+            query = query.format(cod);
+            Estudante.cursor.execute(query);
+            result = Estudante.cursor.fetchone();
+            if result:
+                result = Estudante(result);
+            return result;
+        except Exception as e:
+            logger.error("class: (Estudante) Method: (findByCod) : Exception ({}).".format(e));
+            raise
 
     @staticmethod
     def getValues(columns,dd):
@@ -50,15 +66,18 @@ class Estudante():
             idade = int(columns[dd['IDADE']]);
             sexo = columns[dd['TP_SEXO']];
             cod_nacionalidade = int(columns[dd['NACIONALIDADE']]);
-            cod_escola = -1 if columns[dd['COD_ESCOLA']] == '' else int(columns[dd['COD_ESCOLA']]);
-            cod_municipio_nasc = -1 if columns[dd['COD_MUNICIPIO_NASCIMENTO']] == '' else int(columns[dd['COD_MUNICIPIO_NASCIMENTO']]);
-            cod_uf_nasc = -1 if columns[dd['COD_UF_NASCIMENTO']] == '' else int(columns[dd['COD_UF_NASCIMENTO']]);
             cod_municipio_resid = int(columns[dd['COD_MUNICIPIO_RESIDENCIA']]);
+            cod_municipio_nasc = -1 if columns[dd['COD_MUNICIPIO_NASCIMENTO']] == '' else int(columns[dd['COD_MUNICIPIO_NASCIMENTO']]);
+            cod_uf_resid = -1 if columns[dd['COD_UF_RESIDENCIA']] == '' else int(columns[dd['COD_UF_RESIDENCIA']]);
+            cod_uf_nasc = -1 if columns[dd['COD_UF_NASCIMENTO']] == '' else int(columns[dd['COD_UF_NASCIMENTO']]);
+            estado_civil = int(columns[dd['TP_ESTADO_CIVIL']]);
+            etnia = int(columns[dd['TP_COR_RACA']]);
             cod_conclusao_EM = int(columns[dd['ST_CONCLUSAO']]);
             no_conclusao_EM = -1 if columns[dd['ANO_CONCLUIU']] == '' else int(columns[dd['ANO_CONCLUIU']]);
-            estado_civil = int(columns[dd['TP_ESTADO_CIVIL']]);
-            raca = int(columns[dd['TP_COR_RACA']]);
-            values = (inscricao,idade,sexo,cod_nacionalidade,cod_escola,cod_municipio_nasc,cod_uf_nasc,cod_municipio_resid,cod_conclusao_EM,no_conclusao_EM,estado_civil,raca);
+            tipo_escola_EM = -1 if columns[dd['TP_ESCOLA']] == '' else int(columns[dd['TP_ESCOLA']]);
+            tipo_ens_escola_EM = -1 if columns[dd['IN_TP_ENSINO']] == '' else int(columns[dd['IN_TP_ENSINO']]);
+            cod_escola = -1 if columns[dd['COD_ESCOLA']] == '' else int(columns[dd['COD_ESCOLA']]);
+            values = (inscricao,idade,sexo,cod_nacionalidade,cod_municipio_resid,cod_municipio_nasc,cod_uf_resid,cod_uf_nasc,estado_civil,etnia, cod_conclusao_EM, no_conclusao_EM, tipo_escola_EM, tipo_ens_escola_EM, cod_escola);
             ret = values;
         except Exception as e:
             logger.error("Exception during get values from columns: {}".format(e));

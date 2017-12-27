@@ -1,9 +1,9 @@
-from classes.Estudante import *;
-from classes.ProvaObjetiva import *;
-import classes.Database as db;
-import classes.file as csvfile;
+from classes.Estudante import *
+from classes.ProvaObjetiva import *
+from classes.Database import *
+import classes.file as csvfile
 import logging
-import config.logger as log;
+import config.logger as log
 
 logger = logging.getLogger(__name__);
 
@@ -16,7 +16,7 @@ def insertEstudents(data,dd):
     while True:
         try:
             line = csvfile.readLine(data);
-            values = Estudante.getValues(columns,dd);
+            values = Estudante.getValues(line,dd);
             Estudante.insert(values,cursor);
             i = i +1;
             if i%MAX_TO_COMMIT ==0:
@@ -24,7 +24,7 @@ def insertEstudents(data,dd):
                 conn.commit();
         except Exception as e:
             logger.error("Exception during inserting students: {}.".format(e));
-            print("error: {}".format(e));          
+            print("error: {}".format(e));
             conn.commit();
             break;
 
@@ -70,17 +70,29 @@ def inserirProvaRedacao(data,dd):
                 conn.commit();
         except Exception as e:
             logger.error("Exception during inserting students: {}.".format(e));
-            print("error: {}".format(e));          
+            print("error: {}".format(e));
             conn.commit();
             break;
+
+def findAllEstudents():
+    conn = db.connect();
+    cursor = conn.cursor();
+    Estudante.findAll(cursor);
+
+def findStudentByCod():
+    estudante = Estudante.findByCod(140000000003);
+    if estudante:
+        print(estudante.toString());
+    else:
+        print("Estudante nao encontrado");
 
 if __name__ == "__main__":
     logging.basicConfig(filename=log.filename, level=log.level,format=log.lineformat, datefmt=log.datefmt)
 
-    microdados =  "csv/dados.csv";
+    microdados =  "csv/microdados.csv";
     open_mode = "rb";
     data = csvfile.openFile(microdados,open_mode);
     data_dict = csvfile.createDict(data);
     #insertEstudents(data,data_dict);
-    inserirProvaObjetiva(data,data_dict);
+    findStudentByCod();
     print("done!");
