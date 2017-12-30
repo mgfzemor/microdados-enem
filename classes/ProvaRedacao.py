@@ -1,29 +1,76 @@
 __author__ = "Mario Figueiro Zemor"
 __email__ = "mario.figueiro@ufgrs.br"
-
-from Prova import Prova;
-import classes.Database as db;
+from classes.Database import *
 import logging
 
 logger = logging.getLogger(__name__);
 
-class ProvaRedacao(Prova):
-    def __init__(self,cod,cod_inscricao,nota,status,lingua_estrangeira,nota_comp1,nota_comp2,nota_comp3,nota_comp4,nota_comp5):
-        Prova.__init__(self,cod,cod_inscricao,nota);        
-        self.status = status;
-        self.llingua_estrangeira = lingua_estrangeira;
-        self.nota_comp1 = nota_comp1;
-        self.nota_comp2 = nota_comp2;
-        self.nota_comp3 = nota_comp3;
-        self.nota_comp4 = nota_comp4;
-        self.nota_comp5 = nota_comp5;
+class ProvaRedacao():
+    cursor = Database.getCursor();
+
+    def __init__(self,tupla):
+        self.codigo = tupla[0];
+        self.codinscricao = tupla[1];
+        self.status = tupla[2];
+        self.linguaestrangeira = tupla[3];
+        self.notard = tupla[4];
+        self.notacomp1 = tupla[5];
+        self.notacomp2 = tupla[6];
+        self.notacomp3 = tupla[7];
+        self.notacomp4 = tupla[8];
+        self.notacomp5 = tupla[9];
+
+    def toString(self):
+        return "ProvaRedacao[{},{},{}]".format(self.codigo, self.codinscricao, self.notard);
 
     @staticmethod
-    def insert(values,cursor):
+    def getQuery(query):
+        queries = { 'INSERT' : """INSERT INTO provaredacao VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    'FIND_BY_ID': """SELECT * FROM provaredacao WHERE codinscricao = {} """};
+        return queries[query];
+
+    @staticmethod
+    def insert(values, cursor):
         try:
-            logger.debug("Inserting values: {} into table prova_redacao.".format(values));
-            query = """INSERT INTO prova_redacao (codigo_inscricao,nota,status,lingua_estrangeira,nota_comp1,nota_comp2,nota_comp3,nota_comp4,nota_comp5) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)"""; #queries["INSERT"];
+            logger.debug("ProvaRedacao: Inserting values: {}".format(values));
+            query = ProvaRedacao.getQuery('INSERT');
             cursor.execute(query,values);
         except Exception as e:
-            logger.error("Exception during insert values into prova_redacao: {}".format(e));
-        
+            logger.error("ProvaRedacao: Exception during insert values: {}".format(e));
+            raise
+
+    @staticmethod
+    def findByCod(cod):
+        try:
+            logger.debug("Find ProvaRedacao by cod.");
+            query = ProvaRedacao.getQuery('FIND_BY_ID');
+            query = query.format(cod);
+            ProvaRedacao.cursor.execute(query);
+            result = ProvaRedacao.cursor.fetchone();
+            if result:
+                result = ProvaRedacao(result);
+            return result;
+        except Exception as e:
+            logger.error("class: (ProvaRedacao) Method: (findByCod) : Exception ({}).".format(e));
+            raise
+
+    @staticmethod
+    def getValues(columns,dd,cod):
+        try:
+            logger.debug("ProvaRedacao: Getting values from file columns.");
+            codigo = cod;
+            codinscricao = int(columns[dd['NU_INSCRICAO']]);
+            status = int(columns[dd['IN_STATUS_REDACAO']]);
+            linguaestrangeira = int(columns[dd['TP_LINGUA']]);
+            notard = 0.0 if columns[dd['NU_NOTA_REDACAO']] == '' else float(columns[dd['NU_NOTA_REDACAO']]);
+            notacomp1 = 0.0 if columns[dd['NU_NOTA_COMP1']] == '' else float(columns[dd['NU_NOTA_COMP1']]);
+            notacomp2 = 0.0 if columns[dd['NU_NOTA_COMP2']] == '' else float(columns[dd['NU_NOTA_COMP2']]);
+            notacomp3 = 0.0 if columns[dd['NU_NOTA_COMP3']] == '' else float(columns[dd['NU_NOTA_COMP3']]);
+            notacomp4 = 0.0 if columns[dd['NU_NOTA_COMP4']] == '' else float(columns[dd['NU_NOTA_COMP4']]);
+            notacomp5 = 0.0 if columns[dd['NU_NOTA_COMP5']] == '' else float(columns[dd['NU_NOTA_COMP5']]);
+            values = (codigo,codinscricao, status, linguaestrangeira, notard, notacomp1, notacomp2, notacomp3, notacomp4, notacomp5);
+            ret = values;
+        except Exception as e:
+            logger.error("ProvaRedacao: Exception during get values from columns: {}".format(e));
+            ret = None;
+        return ret;

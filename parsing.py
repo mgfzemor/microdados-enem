@@ -1,5 +1,6 @@
 from classes.Estudante import *
 from classes.ProvaObjetiva import *
+from classes.ProvaRedacao import *
 from classes.Database import *
 import classes.file as csvfile
 import logging
@@ -7,10 +8,10 @@ import config.logger as log
 
 logger = logging.getLogger(__name__);
 
-MAX_TO_COMMIT=5
+MAX_TO_COMMIT=6
 
 def insertEstudents(data,dd):
-    conn = db.connect();
+    conn = Database.connect();
     cursor = conn.cursor();
     i = 0;
     while True:
@@ -28,27 +29,28 @@ def insertEstudents(data,dd):
             conn.commit();
             break;
 
-def inserirProvaObjetiva(data,dd):
-    conn = db.connect();
+def inserirEscolas():
+    escolas = {};
+    while True:
+        try:
+            line = csvfile.readLine(data);
+            
+
+def inserirProvas(data,dd):
+    conn = Database.connect();
     cursor = conn.cursor();
     i = 0;
     while True:
         try:
             columns = csvfile.readLine(data);
-            valuesCN = ProvaObjetiva.getValuesCN(columns,dd);
-            valuesCH = ProvaObjetiva.getValuesCH(columns,dd);
-            valuesLC = ProvaObjetiva.getValuesLC(columns,dd);
-            valuesMT = ProvaObjetiva.getValuesMT(columns,dd);
-
-            ProvaObjetiva.insert(valuesCN,cursor);
-            ProvaObjetiva.insert(valuesCH,cursor);
-            ProvaObjetiva.insert(valuesLC,cursor);
-            ProvaObjetiva.insert(valuesMT,cursor);
-            i = i+1;
+            valuesProvaObjetiva = ProvaObjetiva.getValues(columns,dd,i);
+            valuesProvaRedacao = ProvaRedacao.getValues(columns,dd,i+1);
+            ProvaObjetiva.insert(valuesProvaObjetiva, cursor);
+            ProvaRedacao.insert(valuesProvaRedacao, cursor);
+            i = i+2;
             if i%MAX_TO_COMMIT ==0:
-                print("commit: total ProvaObjetiva: {}".format(i));
+                print("commit: total Provas: {}".format(i));
                 conn.commit();
-                break;
         except Exception as e:
             logger.error("Exception during inserting objective tests: {}.".format(e));
             print("erro during inseirProvaObjetiva: {}".format(e));
@@ -93,6 +95,5 @@ if __name__ == "__main__":
     open_mode = "rb";
     data = csvfile.openFile(microdados,open_mode);
     data_dict = csvfile.createDict(data);
-    #insertEstudents(data,data_dict);
-    findStudentByCod();
+    Estudante.groupSchool();
     print("done!");

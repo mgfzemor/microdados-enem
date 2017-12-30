@@ -6,13 +6,18 @@ import logging
 
 logger = logging.getLogger(__name__);
 class Escola():
-    def __init__(self,cod,nome,codmunicipio,dependenciaadm,situacaofuncionamento,tipo):
+    def __init__(self,tupla):
         self.cod = cod;
         self.nome = nome;
         self.codmunicipio = codmunicipio;
         self.dependenciaadm = dependenciaadm;
         self.situacaofuncionamento = situacaofuncionamento;
         self.tipo = tipo;
+        self.notacn = notacn;
+        self.notach = notach;
+        self.notalc = notalc;
+        self.notamt = notamt;
+
 
     @staticmethod
     def getQuery(query):
